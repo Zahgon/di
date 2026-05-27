@@ -1,14 +1,5 @@
 package di
 
-import (
-	"errors"
-	"fmt"
-	"reflect"
-	"sort"
-	"strconv"
-	"strings"
-)
-
 const generatedNamePrefix = "_di_generated_"
 
 // EnhancedBuilder can be used to create a Container.
@@ -35,56 +26,21 @@ type EnhancedBuilder struct {
 // [App, Request, SubRequest]
 // It can return an error if the scopes are not valid.
 func NewEnhancedBuilder(scopes ...string) (*EnhancedBuilder, error) {
-	if len(scopes) == 0 {
-		scopes = []string{App, Request, SubRequest}
-	}
-
-	if err := checkBuilderScopes(scopes); err != nil {
-		return nil, err
-	}
-
-	return &EnhancedBuilder{
-		definitions:    DefMap{},
-		bindings:       map[string]*Def{},
-		insertionOrder: map[string]int{},
-		numAdded:       0,
-		scopes:         scopes,
-	}, nil
+	_ = "STUB: not implemented"
+	return nil, nil
 }
 
-func checkBuilderScopes(scopes []string) error {
-	if len(scopes) == 0 {
-		return errors.New("at least one scope is required")
-	}
-
-	for i, scope := range scopes {
-		if scope == "" {
-			return errors.New("a scope can not be an empty string")
-		}
-		if ScopeList(scopes[i+1:]).Contains(scope) {
-			return fmt.Errorf("at least two scopes are identical")
-		}
-	}
-
-	return nil
-}
+func checkBuilderScopes(scopes []string) error { _ = "STUB: not implemented"; return nil }
 
 // Scopes returns the list of available scopes.
-func (b *EnhancedBuilder) Scopes() ScopeList {
-	return ScopeList(b.scopes).Copy()
-}
+func (b *EnhancedBuilder) Scopes() ScopeList { _ = "STUB: not implemented"; return *new(ScopeList) }
 
 // Definitions returns a map with the all objects definitions registered at this point.
 // The key of the map is the name of the definition.
-func (b *EnhancedBuilder) Definitions() DefMap {
-	return b.definitions.Copy()
-}
+func (b *EnhancedBuilder) Definitions() DefMap { _ = "STUB: not implemented"; return *new(DefMap) }
 
 // NameIsDefined returns true if there is a definition registered with the given name.
-func (b *EnhancedBuilder) NameIsDefined(name string) bool {
-	_, ok := b.definitions[name]
-	return ok
-}
+func (b *EnhancedBuilder) NameIsDefined(name string) bool { _ = "STUB: not implemented"; return false }
 
 // Add adds one definition to the Builder.
 // It returns an error if the definition can not be added.
@@ -100,45 +56,7 @@ func (b *EnhancedBuilder) NameIsDefined(name string) bool {
 // It binds the definition to the generated Container.
 // That allows to build an object not only from its name
 // but also from its definition which happens to be faster.
-func (b *EnhancedBuilder) Add(def *Def) error {
-	if def == nil {
-		return errors.New("the definition can not be nil")
-	}
-
-	if len(b.scopes) == 0 {
-		return errors.New("the builder was not created with NewEnhancedBuilder")
-	}
-
-	if def.Scope != "" && !b.scopes.Contains(def.Scope) {
-		return fmt.Errorf("scope `%s` is not allowed", def.Scope)
-	}
-
-	if def.Build == nil {
-		return errors.New("the Build function can not be nil")
-	}
-
-	if strings.HasPrefix(def.Name, generatedNamePrefix) {
-		return errors.New("the definition name can not start by `" + generatedNamePrefix + "`")
-	}
-
-	defStruct := *def
-
-	if defStruct.Name == "" {
-		defStruct.Name = generatedNamePrefix + strconv.Itoa(b.numAdded)
-	}
-
-	if defStruct.Is != nil {
-		defStruct.Is = make([]reflect.Type, len(def.Is))
-		copy(defStruct.Is, def.Is)
-	}
-
-	b.definitions[defStruct.Name] = defStruct
-	b.bindings[defStruct.Name] = def
-	b.insertionOrder[defStruct.Name] = b.numAdded
-	b.numAdded++
-
-	return nil
-}
+func (b *EnhancedBuilder) Add(def *Def) error { _ = "STUB: not implemented"; return nil }
 
 // Build creates a Container in the most generic scope
 // with all the definitions registered in the builder.
@@ -149,92 +67,18 @@ func (b *EnhancedBuilder) Add(def *Def) error {
 // A definition can only belong to one container.
 // That means you can only call Build once.
 func (b *EnhancedBuilder) Build() (Container, error) {
-	if err := checkBuilderScopes(b.scopes); err != nil {
-		return newClosedContainer(), err
-	}
-
-	// Update definition scopes.
-	for name, def := range b.definitions {
-		if def.Scope == "" {
-			def.Scope = b.scopes[0]
-		}
-		b.definitions[name] = def
-	}
-
-	// Put definitions in a slice and sort them by insertion order.
-	definitions := []Def{}
-
-	for _, def := range b.definitions {
-		definitions = append(definitions, def)
-	}
-
-	sort.Slice(definitions, func(i, j int) bool {
-		return b.insertionOrder[definitions[i].Name] < b.insertionOrder[definitions[j].Name]
-	})
-
-	// Generate the indexes based on the definitions.
-	indexesByName := make(map[string]int, len(definitions))
-	indexesByType := map[reflect.Type][]int{}
-	definitionScopeLevels := make([]int, len(definitions))
-
-	for index, def := range definitions {
-		// Update the bound fields of the definition.
-		def.builderBound = true
-		def.builderIndex = index
-		definitions[index] = def
-
-		// Update indexes and definitionScopeLevels slices.
-		indexesByName[def.Name] = index
-		for _, defType := range def.Is {
-			indexesByType[defType] = append(indexesByType[defType], index)
-		}
-		for i, s := range b.scopes {
-			if s == def.Scope {
-				definitionScopeLevels[index] = i
-				break
-			}
-		}
-
-		// Update the bound definition.
-		if b.bindings[def.Name].builderBound {
-			return newClosedContainer(), errors.New("the definition `" + def.Name + "` was already added to another container")
-		}
-		b.bindings[def.Name].Build = def.Build
-		b.bindings[def.Name].Close = def.Close
-		b.bindings[def.Name].Name = def.Name
-		b.bindings[def.Name].Scope = def.Scope
-		b.bindings[def.Name].Unshared = def.Unshared
-		b.bindings[def.Name].Is = def.Is
-		b.bindings[def.Name].Tags = def.Tags
-		b.bindings[def.Name].builderBound = true
-		b.bindings[def.Name].builderIndex = def.builderIndex
-	}
-
-	return Container{
-		core: &containerCore{
-			closed: false,
-
-			scopes:     b.scopes,
-			scopeLevel: 0,
-
-			parent:          nil,
-			children:        map[*containerCore]struct{}{},
-			unscopedChild:   nil,
-			deleteIfNoChild: false,
-
-			indexesByName:         indexesByName,
-			indexesByType:         indexesByType,
-			definitions:           definitions,
-			objects:               make([]interface{}, len(indexesByName)),
-			definitionScopeLevels: definitionScopeLevels,
-			isBuilt:               make([]int32, len(indexesByName)),
-			building:              make([]*buildingChan, len(indexesByName)),
-
-			unshared:      []interface{}{},
-			unsharedIndex: []int{},
-
-			dependencies: newGraph(),
-		},
-		builtList: make([]int, 0, 10),
-	}, nil
+	_ = "STUB: not implemented"
+	return *new(Container), nil
 }
+
+// Update definition scopes.
+
+// Put definitions in a slice and sort them by insertion order.
+
+// Generate the indexes based on the definitions.
+
+// Update the bound fields of the definition.
+
+// Update indexes and definitionScopeLevels slices.
+
+// Update the bound definition.

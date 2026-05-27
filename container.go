@@ -70,89 +70,33 @@ type containerCore struct {
 
 // Definitions returns the map of the available definitions ordered by name.
 // These definitions represent all the objects that this Container can build.
-func (ctn Container) Definitions() map[string]Def {
-	defs := make(map[string]Def, len(ctn.core.definitions))
-
-	for _, def := range ctn.core.definitions {
-		defs[def.Name] = def
-	}
-
-	return defs
-}
+func (ctn Container) Definitions() map[string]Def { _ = "STUB: not implemented"; return nil }
 
 // NameIsDefined returns true if there is a definition for the given name.
-func (ctn Container) NameIsDefined(name string) bool {
-	_, ok := ctn.core.indexesByName[name]
-	return ok
-}
+func (ctn Container) NameIsDefined(name string) bool { _ = "STUB: not implemented"; return false }
 
 // TypeIsDefined returns true if there is a definition for the given type.
 // Types are declared in the Is field of a definition.
-func (ctn Container) TypeIsDefined(typ reflect.Type) bool {
-	_, ok := ctn.core.indexesByType[typ]
-	return ok
-}
+func (ctn Container) TypeIsDefined(typ reflect.Type) bool { _ = "STUB: not implemented"; return false }
 
 // DefinitionsForType returns the list of the definitions matching the given type.
 // Types are declared in the Is field of a definition.
 func (ctn Container) DefinitionsForType(typ reflect.Type) []Def {
-	indexes := ctn.core.indexesByType[typ]
-	defs := make([]Def, 0, len(indexes))
-
-	for _, index := range indexes {
-		defs = append(defs, ctn.core.definitions[index])
-	}
-
-	return defs
+	_ = "STUB: not implemented"
+	return nil
 }
 
 // Scope returns the Container scope.
-func (ctn Container) Scope() string {
-	return ctn.core.scopes[ctn.core.scopeLevel]
-}
+func (ctn Container) Scope() string { _ = "STUB: not implemented"; return "" }
 
 // Scopes returns the list of available scopes.
-func (ctn Container) Scopes() []string {
-	return ctn.core.scopes.Copy()
-}
+func (ctn Container) Scopes() []string { _ = "STUB: not implemented"; return nil }
 
 // ParentScopes returns the list of scopes that are more generic than the Container scope.
-func (ctn Container) ParentScopes() []string {
-	return ctn.core.scopes.ParentScopes(ctn.Scope())
-}
+func (ctn Container) ParentScopes() []string { _ = "STUB: not implemented"; return nil }
 
 // SubScopes returns the list of scopes that are more specific than the Container scope.
-func (ctn Container) SubScopes() []string {
-	return ctn.core.scopes.SubScopes(ctn.Scope())
-}
+func (ctn Container) SubScopes() []string { _ = "STUB: not implemented"; return nil }
 
 // newClosedContainer returns a closed container. It is not usable and is returned when there is an error.
-func newClosedContainer() Container {
-	return Container{
-		core: &containerCore{
-			closed: true,
-
-			scopes:     []string{},
-			scopeLevel: 0,
-
-			parent:          nil,
-			children:        map[*containerCore]struct{}{},
-			unscopedChild:   nil,
-			deleteIfNoChild: false,
-
-			indexesByName:         map[string]int{},
-			indexesByType:         map[reflect.Type][]int{},
-			definitions:           []Def{},
-			objects:               []interface{}{},
-			definitionScopeLevels: []int{},
-			isBuilt:               []int32{},
-			building:              []*buildingChan{},
-
-			unshared:      []interface{}{},
-			unsharedIndex: []int{},
-
-			dependencies: newGraph(),
-		},
-		builtList: make([]int, 0, 10),
-	}
-}
+func newClosedContainer() Container { _ = "STUB: not implemented"; return *new(Container) }
